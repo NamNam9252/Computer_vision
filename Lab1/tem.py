@@ -1,7 +1,3 @@
-img1 = 23
-img2 = 24
+import cv2
 
-imgs=[img1 , img2 ]
-
-for x in imgs:
-    print(x)
+img = cv2.imread()
