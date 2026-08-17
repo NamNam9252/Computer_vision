@@ -1,48 +1,42 @@
-import cv2
-import numpy as np
+# 4. error maps
+
 import matplotlib.pyplot as plt
+import cv2
+import numpy as np 
 
-# Load original and resize to 512x512 (same as Q3)
-original = cv2.imread("s:/Computer Vision/Lab1/Part1/images/img1.gif")
-original = cv2.resize(original, (512, 512), interpolation=cv2.INTER_CUBIC)
-original = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)  # grayscale for clear error maps
+def error_map(original, reconstructed):
+    absolute_error = np.abs(
+        original.astype(np.float64) -
+        reconstructed.astype(np.float64)
+    )
 
-# The 6 reconstructed images from Q2
-labels = [
-    ("128->512 Nearest",  "output/img0_0.png"),
-    ("128->512 Linear",   "output/img0_1.png"),
-    ("128->512 Cubic",    "output/img0_2.png"),
-    ("256->512 Nearest",  "output/img1_0.png"),
-    ("256->512 Linear",   "output/img1_1.png"),
-    ("256->512 Cubic",    "output/img1_2.png"),
-]
+    squared_error = (
+        original.astype(np.float64) -
+        reconstructed.astype(np.float64)
+    ) ** 2
 
-fig, axes = plt.subplots(6, 2, figsize=(10, 24))
-fig.suptitle("Pixel-wise Error Maps", fontsize=16, fontweight="bold")
+    plt.figure(figsize=(10,4))
 
-for row, (title, path) in enumerate(labels):
-    img = cv2.imread(path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    plt.subplot(1,2,1)
+    plt.imshow(absolute_error, cmap="gray")
+    plt.title("Absolute Error")
+    plt.axis("off")
 
-    orig_f = original.astype(np.float64)
-    img_f  = img.astype(np.float64)
+    plt.subplot(1,2,2)
+    plt.imshow(squared_error, cmap="gray")
+    plt.title("Squared Error")
+    plt.axis("off")
 
-    abs_err = np.abs(orig_f - img_f)          # absolute error
-    sq_err  = (orig_f - img_f) ** 2           # squared error
+    plt.show()
 
-    # Absolute error map
-    axes[row, 0].imshow(abs_err, cmap="hot")
-    axes[row, 0].set_title(f"{title}\nAbsolute Error  (mean={abs_err.mean():.2f})")
-    axes[row, 0].axis("off")
-    plt.colorbar(axes[row, 0].images[0], ax=axes[row, 0], fraction=0.046)
 
-    # Squared error map
-    axes[row, 1].imshow(sq_err, cmap="hot")
-    axes[row, 1].set_title(f"{title}\nSquared Error  (mean={sq_err.mean():.2f})")
-    axes[row, 1].axis("off")
-    plt.colorbar(axes[row, 1].images[0], ax=axes[row, 1], fraction=0.046)
 
-plt.tight_layout()
-plt.savefig("output/q4_error_maps.png", dpi=150, bbox_inches="tight")
-print("Saved -> output/q4_error_maps.png")
-plt.show()
+
+img = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\images\\img1.gif")
+
+img128 = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\output\\img_128_nearest.png")
+
+img256 = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\output\\img_256_nearest.png")
+
+error_map(img, img128)
+error_map(img ,img256)
