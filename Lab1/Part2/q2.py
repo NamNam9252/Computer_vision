@@ -1,45 +1,87 @@
 import cv2
 import numpy as np
-from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
 
-def weighted_avg_kernel(k):
-    h = np.arange(1, k // 2 + 2)
-    w1d = np.concatenate([h, h[-2::-1]])
-    k2d = np.outer(w1d, w1d).astype(np.float64)
-    return k2d / k2d.sum()
+sizes = [3, 5, 7]
 
-def box_manual(img, k):
-    kernel = np.ones((k, k), dtype=np.float64) / (k * k)
-    out = convolve2d(img.astype(np.float64), kernel, mode="same", boundary="symm")
-    return np.clip(out, 0, 255).astype(np.uint8)
+imgns1 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img3.png" , cv2.IMREAD_GRAYSCALE)
+imgns2 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img4.png" , cv2.IMREAD_GRAYSCALE)
 
-KERNELS = [3, 7, 15]
+# Weighted-average kernels
+k3 = np.ones((3,3), np.float32) / 9
+k5 = np.ones((5,5), np.float32) / 25
+k7 = np.ones((7,7), np.float32) / 49
 
-noisy1 = cv2.imread("output/noisy1_sp.png",    cv2.IMREAD_GRAYSCALE)
-noisy2 = cv2.imread("output/noisy2_gauss.png", cv2.IMREAD_GRAYSCALE)
+kernels = [k3, k5, k7]
 
-filter_fns = {
-    "Box":      lambda img, k: box_manual(img, k),
-    "W-Avg":    lambda img, k: cv2.filter2D(img, -1, weighted_avg_kernel(k)),
-    "Gaussian": lambda img, k: cv2.GaussianBlur(img, (k, k), 0),
-    "Median":   lambda img, k: cv2.medianBlur(img, k),
-}
+# -------- Image 1: Salt & Pepper --------
+box1 = [cv2.blur(imgns1, (k,k)) for k in sizes]
+weighted1 = [cv2.filter2D(imgns1, -1, k) for k in kernels]
+gaussian1 = [cv2.GaussianBlur(imgns1, (k,k), 0) for k in sizes]
+median1 = [cv2.medianBlur(imgns1, k) for k in sizes]
 
-for noisy, tag, title in [(noisy1, "sp", "Salt-Pepper"), (noisy2, "gauss", "Gaussian")]:
-    fig, axes = plt.subplots(len(filter_fns), len(KERNELS) + 1, figsize=(14, 14))
-    fig.suptitle(f"Filter Effect vs Kernel Size — {title} Noise", fontsize=13, fontweight="bold")
+# -------- Image 2: Gaussian Noise --------
+box2 = [cv2.blur(imgns2, (k,k)) for k in sizes]
+weighted2 = [cv2.filter2D(imgns2, -1, k) for k in kernels]
+gaussian2 = [cv2.GaussianBlur(imgns2, (k,k), 0) for k in sizes]
+median2 = [cv2.medianBlur(imgns2, k) for k in sizes]
 
-    for row, (fname, fn) in enumerate(filter_fns.items()):
-        axes[row, 0].imshow(noisy, cmap="gray"); axes[row, 0].set_title("Noisy"); axes[row, 0].axis("off")
-        for col, k in enumerate(KERNELS):
-            result = fn(noisy, k)
-            axes[row, col + 1].imshow(result, cmap="gray")
-            axes[row, col + 1].set_title(f"{fname} k={k}")
-            axes[row, col + 1].axis("off")
 
-    plt.tight_layout()
-    plt.savefig(f"output/q2_kernels_{tag}.png", dpi=120, bbox_inches="tight")
-    print(f"Saved -> output/q2_kernels_{tag}.png")
+plt.figure(figsize=(12,10))
 
+for i in range(3):
+    plt.subplot(4,3,i+1)
+    plt.imshow(box1[i], cmap="gray")
+    plt.title(f"Box {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+for i in range(3):
+    plt.subplot(4,3,i+4)
+    plt.imshow(weighted1[i], cmap="gray")
+    plt.title(f"Weighted {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+for i in range(3):
+    plt.subplot(4,3,i+7)
+    plt.imshow(gaussian1[i], cmap="gray")
+    plt.title(f"Gaussian {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+for i in range(3):
+    plt.subplot(4,3,i+10)
+    plt.imshow(median1[i], cmap="gray")
+    plt.title(f"Median {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+plt.tight_layout()
+plt.show()
+
+
+plt.figure(figsize=(12,10))
+
+for i in range(3):
+    plt.subplot(4,3,i+1)
+    plt.imshow(box2[i], cmap="gray")
+    plt.title(f"Box {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+for i in range(3):
+    plt.subplot(4,3,i+4)
+    plt.imshow(weighted2[i], cmap="gray")
+    plt.title(f"Weighted {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+for i in range(3):
+    plt.subplot(4,3,i+7)
+    plt.imshow(gaussian2[i], cmap="gray")
+    plt.title(f"Gaussian {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+for i in range(3):
+    plt.subplot(4,3,i+10)
+    plt.imshow(median2[i], cmap="gray")
+    plt.title(f"Median {sizes[i]}x{sizes[i]}")
+    plt.axis("off")
+
+plt.tight_layout()
 plt.show()

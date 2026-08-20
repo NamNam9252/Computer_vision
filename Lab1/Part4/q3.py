@@ -1,36 +1,87 @@
 import cv2
 import numpy as np
-from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
 
 SIZE = (512, 512)
-img1 = cv2.resize(cv2.imread("images/img1.gif", cv2.IMREAD_GRAYSCALE), SIZE)
-img2 = cv2.resize(cv2.imread("images/img2.gif", cv2.IMREAD_GRAYSCALE), SIZE)
+img1 = cv2.resize(cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE), SIZE)
+img2 = cv2.resize(cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE), SIZE) 
+# Image 1
+gx1 = cv2.Sobel(img1, cv2.CV_64F, 1, 0, ksize=3)
+gy1 = cv2.Sobel(img1, cv2.CV_64F, 0, 1, ksize=3)
 
-Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=np.float64)
-Ky = np.array([[-1,-2,-1], [ 0, 0, 0], [ 1, 2, 1]], dtype=np.float64)
+# Image 2
+gx2 = cv2.Sobel(img2, cv2.CV_64F, 1, 0, ksize=3)
+gy2 = cv2.Sobel(img2, cv2.CV_64F, 0, 1, ksize=3)
 
-def magnitude(img):
-    f = img.astype(np.float64)
-    Ix = convolve2d(f, Kx, mode="same", boundary="symm")
-    Iy = convolve2d(f, Ky, mode="same", boundary="symm")
-    return np.sqrt(Ix**2 + Iy**2)
 
-THRESHOLDS = [30, 80, 150]
+# Gradient magnitude and direction
 
-fig, axes = plt.subplots(2, len(THRESHOLDS) + 1, figsize=(16, 8))
-fig.suptitle("Binary Edge Maps at 3 Threshold Values", fontsize=13, fontweight="bold")
+# Image 1
+magnitude1 = np.sqrt(gx1**2 + gy1**2)
+direction1 = np.arctan2(gy1, gx1)
 
-for row, (img, label) in enumerate([(img1, "Img1 (boundaries)"), (img2, "Img2 (fine detail)")]):
-    mag = magnitude(img)
-    axes[row, 0].imshow(img, cmap="gray"); axes[row, 0].set_title(label); axes[row, 0].axis("off")
-    for col, t in enumerate(THRESHOLDS):
-        binary = (mag > t).astype(np.uint8) * 255
-        axes[row, col + 1].imshow(binary, cmap="gray")
-        axes[row, col + 1].set_title(f"Threshold={t}")
-        axes[row, col + 1].axis("off")
+# Image 2
+magnitude2 = np.sqrt(gx2**2 + gy2**2)
+direction2 = np.arctan2(gy2, gx2)
+
+# Convert direction from radians to degrees
+direction1 = np.degrees(direction1)
+direction2 = np.degrees(direction2)
+
+# 3. Binary edge maps using different thresholds
+
+thresholds = [50, 100, 150]
+
+# Image 1
+edge1_50 = (magnitude1 > 50) * 255
+edge1_100 = (magnitude1 > 100) * 255
+edge1_150 = (magnitude1 > 150) * 255
+
+# Image 2
+edge2_50 = (magnitude2 > 50) * 255
+edge2_100 = (magnitude2 > 100) * 255
+edge2_150 = (magnitude2 > 150) * 255
+
+
+plt.figure(figsize=(12,4))
+
+plt.subplot(1,3,1)
+plt.imshow(edge1_50, cmap="gray")
+plt.title("Threshold = 50")
+plt.axis("off")
+
+plt.subplot(1,3,2)
+plt.imshow(edge1_100, cmap="gray")
+plt.title("Threshold = 100")
+plt.axis("off")
+
+plt.subplot(1,3,3)
+plt.imshow(edge1_150, cmap="gray")
+plt.title("Threshold = 150")
+plt.axis("off")
 
 plt.tight_layout()
-plt.savefig("output/q3_thresholds.png", dpi=150, bbox_inches="tight")
-print("Saved -> output/q3_thresholds.png")
 plt.show()
+
+
+plt.figure(figsize=(12,4))
+
+plt.subplot(1,3,1)
+plt.imshow(edge2_50, cmap="gray")
+plt.title("Threshold = 50")
+plt.axis("off")
+
+plt.subplot(1,3,2)
+plt.imshow(edge2_100, cmap="gray")
+plt.title("Threshold = 100")
+plt.axis("off")
+
+plt.subplot(1,3,3)
+plt.imshow(edge2_150, cmap="gray")
+plt.title("Threshold = 150")
+plt.axis("off")
+
+plt.tight_layout()
+plt.show()
+
+print('''A low threshold detects both strong and weak intensity changes, resulting in more edges but also unwanted edges and noise. As the threshold increases, unwanted edges are removed and the edge map becomes cleaner. However, a very high threshold can cause weak but meaningful edges to disappear. Therefore, an intermediate threshold generally provides a good balance between detecting useful edges and avoiding unwanted edges.''')

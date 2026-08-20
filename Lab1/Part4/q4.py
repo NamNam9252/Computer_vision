@@ -1,39 +1,57 @@
 import cv2
 import numpy as np
-from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
+from utils import laplacian
 
 SIZE = (512, 512)
-img1 = cv2.resize(cv2.imread("images/img1.gif", cv2.IMREAD_GRAYSCALE), SIZE)
-img2 = cv2.resize(cv2.imread("images/img2.gif", cv2.IMREAD_GRAYSCALE), SIZE)
+img1 = cv2.resize(cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE), SIZE)
+img2 = cv2.resize(cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE), SIZE) 
 
-Kx  = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=np.float64)
-Ky  = np.array([[-1,-2,-1], [ 0, 0, 0], [ 1, 2, 1]], dtype=np.float64)
-Klap = np.array([[ 0, 1, 0], [ 1,-4, 1], [ 0, 1, 0]], dtype=np.float64)
 
-def first_order(img):
-    f = img.astype(np.float64)
-    Ix = convolve2d(f, Kx, mode="same", boundary="symm")
-    Iy = convolve2d(f, Ky, mode="same", boundary="symm")
-    return np.sqrt(Ix**2 + Iy**2)
+# 4. Second-order derivative using Laplacian
 
-def second_order(img):
-    """Manual Laplacian (no cv2.Laplacian)."""
-    return convolve2d(img.astype(np.float64), Klap, mode="same", boundary="symm")
+lap1 = laplacian.laplacian(img1)
+lap2 = laplacian.laplacian(img2)
 
-fig, axes = plt.subplots(2, 3, figsize=(15, 9))
-fig.suptitle("First-order vs Second-order Derivatives", fontsize=13, fontweight="bold")
+# Binary edge maps
+edge1 = (lap1 > 30).astype(np.uint8) * 255
+edge2 = (lap2 > 30).astype(np.uint8) * 255
 
-for row, (img, label) in enumerate([(img1, "Img1"), (img2, "Img2")]):
-    grad = first_order(img)
-    lap  = second_order(img)
-    lap_vis = np.clip(lap + 128, 0, 255).astype(np.uint8)
+# Display
+plt.figure(figsize=(12, 6))
 
-    axes[row, 0].imshow(img, cmap="gray");      axes[row, 0].set_title(f"{label}");              axes[row, 0].axis("off")
-    axes[row, 1].imshow(grad, cmap="hot");      axes[row, 1].set_title("Gradient Magnitude");    axes[row, 1].axis("off")
-    axes[row, 2].imshow(lap_vis, cmap="gray");  axes[row, 2].set_title("Laplacian (2nd order)"); axes[row, 2].axis("off")
+plt.subplot(2, 3, 1)
+plt.imshow(img1, cmap='gray')
+plt.title("Image 1")
+plt.axis("off")
+
+plt.subplot(2, 3, 2)
+plt.imshow(lap1, cmap='gray')
+plt.title("Second-Order Derivative")
+plt.axis("off")
+
+plt.subplot(2, 3, 3)
+plt.imshow(edge1, cmap='gray')
+plt.title("Second-Order Edge Map")
+plt.axis("off")
+
+plt.subplot(2, 3, 4)
+plt.imshow(img2, cmap='gray')
+plt.title("Image 2")
+plt.axis("off")
+
+plt.subplot(2, 3, 5)
+plt.imshow(lap2, cmap='gray')
+plt.title("Second-Order Derivative")
+plt.axis("off")
+
+plt.subplot(2, 3, 6)
+plt.imshow(edge2, cmap='gray')
+plt.title("Second-Order Edge Map")
+plt.axis("off")
 
 plt.tight_layout()
-plt.savefig("output/q4_second_order.png", dpi=150, bbox_inches="tight")
-print("Saved -> output/q4_second_order.png")
 plt.show()
+
+
+print('''The first-order derivative detects edges by measuring the rate of intensity change, whereas the second-order derivative detects rapid changes in the gradient. The Laplacian produces thin and sharp edge responses and can highlight fine details more strongly. However, it is more sensitive to noise and may produce unwanted or double-edge responses. The first-order derivative generally produces more stable and easily interpretable edges, while the second-order derivative provides sharper edge localization but is more sensitive to small intensity variations.''')

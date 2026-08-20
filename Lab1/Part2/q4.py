@@ -2,44 +2,118 @@ import cv2
 import numpy as np
 from scipy.signal import convolve2d
 
-def mse(a, b):
-    return np.mean((a.astype(np.float64) - b.astype(np.float64)) ** 2)
 
-def psnr(a, b):
-    m = mse(a, b)
-    return float("inf") if m == 0 else 20 * np.log10(255.0 / np.sqrt(m))
+sizes = [3, 5, 7]
 
-def weighted_avg_kernel(k):
-    h = np.arange(1, k // 2 + 2)
-    w1d = np.concatenate([h, h[-2::-1]])
-    k2d = np.outer(w1d, w1d).astype(np.float64)
-    return k2d / k2d.sum()
+img1 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img3.png", cv2.IMREAD_GRAYSCALE)
+img2 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img4.png", cv2.IMREAD_GRAYSCALE)
 
-def box_manual(img, k):
-    kernel = np.ones((k, k), dtype=np.float64) / (k * k)
-    return np.clip(convolve2d(img.astype(np.float64), kernel, mode="same", boundary="symm"), 0, 255).astype(np.uint8)
+imgns1 = img1 
 
-K = 5
-img1 = cv2.imread("images/img1.gif", cv2.IMREAD_GRAYSCALE)
-img2 = cv2.imread("images/img2.gif", cv2.IMREAD_GRAYSCALE)
+imgns2 = img2 
+# Weighted-average kernels
+k3 = np.ones((3,3), np.float32) / 9
+k5 = np.ones((5,5), np.float32) / 25
+k7 = np.ones((7,7), np.float32) / 49
 
-noisy1 = cv2.imread("output/noisy1_sp.png",    cv2.IMREAD_GRAYSCALE)
-noisy2 = cv2.imread("output/noisy2_gauss.png", cv2.IMREAD_GRAYSCALE)
+kernels = [k3, k5, k7]
 
-filters = {
-    "Box":      lambda img: box_manual(img, K),
-    "W-Avg":    lambda img: cv2.filter2D(img, -1, weighted_avg_kernel(K)),
-    "Gaussian": lambda img: cv2.GaussianBlur(img, (K, K), 0),
-    "Median":   lambda img: cv2.medianBlur(img, K),
-}
+# -------- Image 1: Salt & Pepper --------
+box1 = [cv2.blur(imgns1, (k,k)) for k in sizes]
+weighted1 = [cv2.filter2D(imgns1, -1, k) for k in kernels]
+gaussian1 = [cv2.GaussianBlur(imgns1, (k,k), 0) for k in sizes]
+median1 = [cv2.medianBlur(imgns1, k) for k in sizes]
 
-print("=" * 60)
-print(f"{'Noise':<10} {'Filter':<12} {'MSE':>10} {'PSNR (dB)':>12}")
-print("=" * 60)
+# -------- Image 2: Gaussian Noise --------
+box2 = [cv2.blur(imgns2, (k,k)) for k in sizes]
+weighted2 = [cv2.filter2D(imgns2, -1, k) for k in kernels]
+gaussian2 = [cv2.GaussianBlur(imgns2, (k,k), 0) for k in sizes]
+median2 = [cv2.medianBlur(imgns2, k) for k in sizes]
 
-for orig, noisy, noise_tag in [(img1, noisy1, "S&P"), (img2, noisy2, "Gaussian")]:
-    for name, fn in filters.items():
-        filtered = fn(noisy)
-        m, p = mse(orig, filtered), psnr(orig, filtered)
-        print(f"{noise_tag:<10} {name:<12} {m:>10.4f} {p:>12.4f}")
-    print("-" * 60)
+
+
+
+def mse(original, filtered):
+    return np.mean((original.astype(np.float64) - filtered.astype(np.float64))**2)
+
+
+print("\nComparison of Image 1 by MSE")
+
+print("Box 3x3:", mse(img1, box1[0]))
+print("Box 5x5:", mse(img1, box1[1]))
+print("Box 7x7:", mse(img1, box1[2]))
+
+print("Weighted 3x3:", mse(img1, weighted1[0]))
+print("Weighted 5x5:", mse(img1, weighted1[1]))
+print("Weighted 7x7:", mse(img1, weighted1[2]))
+
+print("Gaussian 3x3:", mse(img1, gaussian1[0]))
+print("Gaussian 5x5:", mse(img1, gaussian1[1]))
+print("Gaussian 7x7:", mse(img1, gaussian1[2]))
+
+print("Median 3x3:", mse(img1, median1[0]))
+print("Median 5x5:", mse(img1, median1[1]))
+print("Median 7x7:", mse(img1, median1[2]))
+
+
+print("\nComparison of Image 2 by MSE")
+
+print("Box 3x3:", mse(img2, box2[0]))
+print("Box 5x5:", mse(img2, box2[1]))
+print("Box 7x7:", mse(img2, box2[2]))
+
+print("Weighted 3x3:", mse(img2, weighted2[0]))
+print("Weighted 5x5:", mse(img2, weighted2[1]))
+print("Weighted 7x7:", mse(img2, weighted2[2]))
+
+print("Gaussian 3x3:", mse(img2, gaussian2[0]))
+print("Gaussian 5x5:", mse(img2, gaussian2[1]))
+print("Gaussian 7x7:", mse(img2, gaussian2[2]))
+
+print("Median 3x3:", mse(img2, median2[0]))
+print("Median 5x5:", mse(img2, median2[1]))
+print("Median 7x7:", mse(img2, median2[2]))
+
+
+# PSNR
+
+def psnr(original, filtered):
+    return 10 * np.log10(255**2 / mse(original, filtered))
+
+
+print("\nComparison of Image 1 by PSNR")
+
+print("Box 3x3:", psnr(img1, box1[0]))
+print("Box 5x5:", psnr(img1, box1[1]))
+print("Box 7x7:", psnr(img1, box1[2]))
+
+print("Weighted 3x3:", psnr(img1, weighted1[0]))
+print("Weighted 5x5:", psnr(img1, weighted1[1]))
+print("Weighted 7x7:", psnr(img1, weighted1[2]))
+
+print("Gaussian 3x3:", psnr(img1, gaussian1[0]))
+print("Gaussian 5x5:", psnr(img1, gaussian1[1]))
+print("Gaussian 7x7:", psnr(img1, gaussian1[2]))
+
+print("Median 3x3:", psnr(img1, median1[0]))
+print("Median 5x5:", psnr(img1, median1[1]))
+print("Median 7x7:", psnr(img1, median1[2]))
+
+
+print("\nComparison of Image 2 by PSNR")
+
+print("Box 3x3:", psnr(img2, box2[0]))
+print("Box 5x5:", psnr(img2, box2[1]))
+print("Box 7x7:", psnr(img2, box2[2]))
+
+print("Weighted 3x3:", psnr(img2, weighted2[0]))
+print("Weighted 5x5:", psnr(img2, weighted2[1]))
+print("Weighted 7x7:", psnr(img2, weighted2[2]))
+
+print("Gaussian 3x3:", psnr(img2, gaussian2[0]))
+print("Gaussian 5x5:", psnr(img2, gaussian2[1]))
+print("Gaussian 7x7:", psnr(img2, gaussian2[2]))
+
+print("Median 3x3:", psnr(img2, median2[0]))
+print("Median 5x5:", psnr(img2, median2[1]))
+print("Median 7x7:", psnr(img2, median2[2]))
