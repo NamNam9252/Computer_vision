@@ -2,29 +2,88 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-SIZE = (512, 512)
-img1 = cv2.resize(cv2.imread("images/img1.gif", cv2.IMREAD_GRAYSCALE), SIZE).astype(np.float64)
-img2 = cv2.resize(cv2.imread("images/img2.gif", cv2.IMREAD_GRAYSCALE), SIZE).astype(np.float64)
+# Read images
+img1 = cv2.imread(r"S:\Computer Vision\Lab1\Part3\images\img5.png", cv2.IMREAD_GRAYSCALE)
+img2 = cv2.imread(r"S:\Computer Vision\Lab1\Part3\images\img6.png", cv2.IMREAD_GRAYSCALE)
 
-SIGMA, K = 15, 31  # selected parameters
-ALPHA, BETA = 1.0, 1.0
+# Make both images the same size
+img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
 
-lpf1 = cv2.GaussianBlur(img1, (K, K), SIGMA)
-hpf2 = img2 - cv2.GaussianBlur(img2, (K, K), SIGMA)
+# Convert to float
+img1 = img1.astype(np.float32)
+img2 = img2.astype(np.float32)
 
-hybrid = np.clip(ALPHA * lpf1 + BETA * hpf2, 0, 255).astype(np.uint8)
-hpf2_vis = np.clip(hpf2 + 128, 0, 255).astype(np.uint8)  # normalised for display only
+# -----------------------------
+# LOW PASS
+# -----------------------------
 
-cv2.imwrite("output/q2_hybrid.png", hybrid)
+low = cv2.GaussianBlur(
+    img1,
+    (21, 21),
+    2
+)
 
-fig, axes = plt.subplots(1, 5, figsize=(22, 4))
-fig.suptitle(f"Hybrid Image (spatial domain)  sigma={SIGMA}, k={K}, a={ALPHA}, b={BETA}", fontsize=12, fontweight="bold")
-for ax, (im, t) in zip(axes, [(img1, "I1 (LPF source)"), (img2, "I2 (HPF source)"),
-                               (lpf1, "LPF(I1)"), (hpf2_vis, "HPF(I2) normalised"),
-                               (hybrid, "Hybrid H")]):
-    ax.imshow(im, cmap="gray"); ax.set_title(t); ax.axis("off")
+# -----------------------------
+# HIGH PASS
+# -----------------------------
+
+blur2 = cv2.GaussianBlur(
+    img2,
+    (21, 21),
+    5
+)
+
+high = img2 - blur2
+
+# -----------------------------
+# HYBRID
+# -----------------------------
+
+hybrid = low + high 
+
+# Keep values between 0 and 255
+hybrid = np.clip(hybrid, 0, 255)
+
+# Convert back to uint8
+low = np.uint8(np.clip(low, 0, 255))
+high_display = np.uint8(np.clip(high + 128, 0, 255))
+hybrid = np.uint8(hybrid)
+
+# -----------------------------
+# DISPLAY
+# -----------------------------
+
+plt.figure(figsize=(12, 8))
+
+plt.subplot(2, 3, 1)
+plt.imshow(img1, cmap="gray")
+plt.title("Image 1")
+plt.axis("off")
+
+plt.subplot(2, 3, 2)
+plt.imshow(low, cmap="gray")
+plt.title("Low Pass")
+plt.axis("off")
+
+plt.subplot(2, 3, 3)
+plt.imshow(img2, cmap="gray")
+plt.title("Image 2")
+plt.axis("off")
+
+plt.subplot(2, 3, 4)
+plt.imshow(blur2, cmap="gray")
+plt.title("Blurred Image 2")
+plt.axis("off")
+
+plt.subplot(2, 3, 5)
+plt.imshow(high_display, cmap="gray")
+plt.title("High Pass")
+plt.axis("off")
+
+plt.subplot(2, 3, 6)
+plt.imshow(hybrid, cmap="gray")
+plt.title("Hybrid Image")
+plt.axis("off")
 
 plt.tight_layout()
-plt.savefig("output/q2_hybrid.png", dpi=150, bbox_inches="tight")
-print("Saved -> output/q2_hybrid.png")
 plt.show()

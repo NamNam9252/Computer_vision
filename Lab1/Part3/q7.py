@@ -2,62 +2,477 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-SIZE = (512, 512)
-img1 = cv2.resize(cv2.imread("images/img1.gif", cv2.IMREAD_GRAYSCALE), SIZE)
-img2 = cv2.resize(cv2.imread("images/img2.gif", cv2.IMREAD_GRAYSCALE), SIZE)
 
-LEVELS = 5
+# =========================================================
+# 1. READ IMAGES
+# =========================================================
 
-def bilateral_pyramid(img, levels, d=9, sc=75, ss=75):
-    """Build Gaussian-like pyramid using bilateral filter instead of pyrDown."""
-    pyr = [img.astype(np.float32)]
-    for _ in range(levels - 1):
-        blurred = cv2.bilateralFilter(pyr[-1].astype(np.uint8), d, sc, ss).astype(np.float32)
-        pyr.append(cv2.resize(blurred, (blurred.shape[1]//2, blurred.shape[0]//2)))
-    return pyr
 
-def laplacian_bilateral(img, levels):
-    gpyr = bilateral_pyramid(img, levels)
-    lpyr = []
-    for i in range(levels - 1):
-        up = cv2.resize(gpyr[i + 1], (gpyr[i].shape[1], gpyr[i].shape[0]))
-        lpyr.append(gpyr[i] - up)
-    lpyr.append(gpyr[-1])
-    return lpyr
+img1 = cv2.imread(
+    r"S:\Computer Vision\Lab1\Part3\images\img5.png",
+    cv2.IMREAD_GRAYSCALE
+)
+
+img2 = cv2.imread(
+    r"S:\Computer Vision\Lab1\Part3\images\img6.png",
+    cv2.IMREAD_GRAYSCALE
+)
+
+
+if img1 is None or img2 is None:
+    raise FileNotFoundError("Could not load one or both images.")
+
+
+# Make both images the same size
+img2 = cv2.resize(
+    img2,
+    (img1.shape[1], img1.shape[0])
+)
+
+
+# Convert to float
+img1 = img1.astype(np.float32)
+img2 = img2.astype(np.float32)
+
+
+# =========================================================
+# 2. PARAMETERS
+# =========================================================
+
+levels = 5
+
+# Bilateral filter parameters
+d = 9
+sigma_color = 75
+sigma_space = 75
+
+
+# =========================================================
+# 3. BILATERAL PYRAMID
+# =========================================================
+
+def bilateral_pyramid(
+    img,
+    levels,
+    d,
+    sigma_color,
+    sigma_space
+):
+
+    pyramid = [img]
+
+    current = img.copy()
+
+    for i in range(levels):
+
+        # Bilateral filtering
+        filtered = cv2.bilateralFilter(
+            current.astype(np.float32),
+            d,
+            sigma_color,
+            sigma_space
+        )
+
+        # Downsample
+        current = cv2.resize(
+            filtered,
+            (
+                filtered.shape[1] // 2,
+                filtered.shape[0] // 2
+            ),
+            interpolation=cv2.INTER_LINEAR
+        )
+
+        pyramid.append(current)
+
+    return pyramid
+
+
+# =========================================================
+# 4. NORMAL GAUSSIAN PYRAMID
+# =========================================================
 
 def gaussian_pyramid(img, levels):
-    pyr = [img.astype(np.float32)]
-    for _ in range(levels - 1):
-        pyr.append(cv2.pyrDown(pyr[-1]))
-    return pyr
 
-def reconstruct(lpyr):
-    img = lpyr[-1]
-    for lap in reversed(lpyr[:-1]):
-        img = cv2.resize(img, (lap.shape[1], lap.shape[0])) + lap
-    return np.clip(img, 0, 255).astype(np.uint8)
+    pyramid = [img]
 
-def blend_bilateral(img_l, img_r, levels):
-    h, w = img_l.shape
-    mask = np.zeros((h, w), dtype=np.float32)
-    mask[:, w // 2:] = 1.0
+    current = img.copy()
 
-    lp1 = laplacian_bilateral(img_l, levels)
-    lp2 = laplacian_bilateral(img_r, levels)
-    gm  = gaussian_pyramid(mask, levels)
+    for i in range(levels):
 
-    blended_pyr = [l1 * (1 - g) + l2 * g for l1, l2, g in zip(lp1, lp2, gm)]
-    return reconstruct(blended_pyr)
+        current = cv2.pyrDown(current)
 
-result_bilateral = blend_bilateral(img1, img2, LEVELS)
-cv2.imwrite("output/q7_bilateral_blend.png", result_bilateral)
+        pyramid.append(current)
 
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-fig.suptitle("Laplacian Pyramid with Bilateral Filter", fontsize=13, fontweight="bold")
-axes[0].imshow(img1, cmap="gray"); axes[0].set_title("Img1"); axes[0].axis("off")
-axes[1].imshow(result_bilateral, cmap="gray"); axes[1].set_title("Bilateral Pyramid Blend"); axes[1].axis("off")
+    return pyramid
+
+
+# =========================================================
+# 5. LAPLACIAN PYRAMID
+# =========================================================
+
+def laplacian_pyramid(gaussian):
+
+    laplacian = []
+
+    for i in range(len(gaussian) - 1):
+
+        h, w = gaussian[i].shape
+
+        expanded = cv2.resize(
+            gaussian[i + 1],
+            (w, h),
+            interpolation=cv2.INTER_LINEAR
+        )
+
+        L = gaussian[i] - expanded
+
+        laplacian.append(L)
+
+    # Smallest level
+    laplacian.append(
+        gaussian[-1]
+    )
+
+    return laplacian
+
+
+# =========================================================
+# 6. CREATE PYRAMIDS FOR IMAGE 1
+# =========================================================
+
+gaussian1 = gaussian_pyramid(
+    img1,
+    levels
+)
+
+bilateral1 = bilateral_pyramid(
+    img1,
+    levels,
+    d,
+    sigma_color,
+    sigma_space
+)
+
+laplacian1 = laplacian_pyramid(
+    bilateral1
+)
+
+
+# =========================================================
+# 7. CREATE PYRAMIDS FOR IMAGE 2
+# =========================================================
+
+gaussian2 = gaussian_pyramid(
+    img2,
+    levels
+)
+
+bilateral2 = bilateral_pyramid(
+    img2,
+    levels,
+    d,
+    sigma_color,
+    sigma_space
+)
+
+laplacian2 = laplacian_pyramid(
+    bilateral2
+)
+
+
+# =========================================================
+# 8. MIX LAPLACIAN PYRAMIDS
+# =========================================================
+
+mixed_pyramid = []
+
+for i in range(len(laplacian1)):
+
+    # Fine levels → Image 2
+    # Coarse levels → Image 1
+
+    if i < 2:
+
+        mixed = laplacian2[i]
+
+    else:
+
+        mixed = laplacian1[i]
+
+    mixed_pyramid.append(
+        mixed
+    )
+
+
+# =========================================================
+# 9. RECONSTRUCT FINAL IMAGE
+# =========================================================
+
+result = mixed_pyramid[-1]
+
+for i in range(
+    len(mixed_pyramid) - 2,
+    -1,
+    -1
+):
+
+    h, w = mixed_pyramid[i].shape
+
+    result = cv2.resize(
+        result,
+        (w, h),
+        interpolation=cv2.INTER_LINEAR
+    )
+
+    result = result + mixed_pyramid[i]
+
+
+result = np.clip(
+    result,
+    0,
+    255
+).astype(np.uint8)
+
+
+# =========================================================
+# 10. DISPLAY EVERYTHING ON ONE SCREEN
+# =========================================================
+
+plt.figure(figsize=(16, 10))
+
+
+# ---------------------------------------------------------
+# ORIGINAL IMAGE 1
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 1)
+
+plt.imshow(
+    img1,
+    cmap="gray"
+)
+
+plt.title("Image 1")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# ORIGINAL IMAGE 2
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 2)
+
+plt.imshow(
+    img2,
+    cmap="gray"
+)
+
+plt.title("Image 2")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# GAUSSIAN PYRAMID
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 3)
+
+plt.imshow(
+    gaussian1[2],
+    cmap="gray"
+)
+
+plt.title("Gaussian Pyramid - Level 2")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# BILATERAL PYRAMID
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 4)
+
+plt.imshow(
+    bilateral1[2],
+    cmap="gray"
+)
+
+plt.title("Bilateral Pyramid - Level 2")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# LAPLACIAN LEVEL
+# ---------------------------------------------------------
+
+lap_display = np.abs(
+    laplacian1[1]
+)
+
+lap_display = cv2.normalize(
+    lap_display,
+    None,
+    0,
+    255,
+    cv2.NORM_MINMAX
+)
+
+
+plt.subplot(3, 4, 5)
+
+plt.imshow(
+    lap_display,
+    cmap="gray"
+)
+
+plt.title("Laplacian Level 1")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# BILATERAL LEVEL
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 6)
+
+plt.imshow(
+    bilateral1[1],
+    cmap="gray"
+)
+
+plt.title("Bilateral Level 1")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# LOWEST GAUSSIAN
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 7)
+
+plt.imshow(
+    gaussian1[-1],
+    cmap="gray"
+)
+
+plt.title("Smallest Gaussian Level")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# LOWEST BILATERAL
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 8)
+
+plt.imshow(
+    bilateral1[-1],
+    cmap="gray"
+)
+
+plt.title("Smallest Bilateral Level")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# IMAGE 1 LAPLACIAN
+# ---------------------------------------------------------
+
+lap1_display = np.abs(
+    laplacian1[0]
+)
+
+lap1_display = cv2.normalize(
+    lap1_display,
+    None,
+    0,
+    255,
+    cv2.NORM_MINMAX
+)
+
+
+plt.subplot(3, 4, 9)
+
+plt.imshow(
+    lap1_display,
+    cmap="gray"
+)
+
+plt.title("Laplacian Fine Details")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# IMAGE 2 LAPLACIAN
+# ---------------------------------------------------------
+
+lap2_display = np.abs(
+    laplacian2[0]
+)
+
+lap2_display = cv2.normalize(
+    lap2_display,
+    None,
+    0,
+    255,
+    cv2.NORM_MINMAX
+)
+
+
+plt.subplot(3, 4, 10)
+
+plt.imshow(
+    lap2_display,
+    cmap="gray"
+)
+
+plt.title("Image 2 Fine Details")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# FINAL RESULT
+# ---------------------------------------------------------
+
+plt.subplot(3, 4, 11)
+
+plt.imshow(
+    result,
+    cmap="gray"
+)
+
+plt.title("Bilateral + Laplacian Mixed")
+plt.axis("off")
+
+
+# ---------------------------------------------------------
+# NORMAL GAUSSIAN MIX RESULT
+# ---------------------------------------------------------
+
+# Simple comparison
+normal_mixed = (
+    0.5 * img1 +
+    0.5 * img2
+)
+
+normal_mixed = np.clip(
+    normal_mixed,
+    0,
+    255
+).astype(np.uint8)
+
+
+plt.subplot(3, 4, 12)
+
+plt.imshow(
+    normal_mixed,
+    cmap="gray"
+)
+
+plt.title("Simple Image Mix")
+plt.axis("off")
+
 
 plt.tight_layout()
-plt.savefig("output/q7_bilateral.png", dpi=150, bbox_inches="tight")
-print("Saved -> output/q7_bilateral.png")
 plt.show()
