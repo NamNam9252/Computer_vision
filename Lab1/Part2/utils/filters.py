@@ -39,8 +39,7 @@ def medianFilter(image:np.ndarray , size:int)->np.ndarray:
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             region = padded_image[i:i+size, j:j+size]
-            filtered_image[i, j] = np.median(region)
-
+            filtered_image[i, j] = np.median(region * kernel)
     return filtered_image
 
 

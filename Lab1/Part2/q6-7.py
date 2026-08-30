@@ -90,7 +90,7 @@ plt.show()
 
 
 
-print('''The Median filter gives the best overall visual result for the complete image, as it removes the salt-and-pepper noise effectively while preserving the butterfly's edges and fine details. However, the Gaussian filter performs better for the Gaussian-noise region. Therefore, the Median filter provides the best overall compromise when a single filter must be applied to the complete image.''')
+print('''The Median filter gives the best overall visual result for the complete image, as it removes the salt-and-pepper noise effectively while preserving the butterfly's edges and fine details. However, the Weighted Average filter performs better for the Gaussian-noise region. Therefore, the Median filter provides the best overall compromise when a single filter must be applied to the complete image.''')
 
 
 
@@ -104,8 +104,8 @@ result_region = np.zeros_like(result)
 # Left half - Salt & Pepper noise -> Median filter
 result_region[0:256, :] = cv2.medianBlur(result[0:256, :], 3)
 
-# Right half - Gaussian noise -> Gaussian filter
-result_region[256:512, :] = cv2.GaussianBlur(result[256:512, :], (3,3), 0)
+# Right half - Gaussian noise -> Weighted Average filter
+result_region[256:512, :] = cv2.filter2D(result[256:512, :], -1, kernel)
 
 
 # Display result

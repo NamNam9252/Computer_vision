@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 SIZE = (512, 512)
-img1 = cv2.resize(cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE), SIZE)
-img2 = cv2.resize(cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE), SIZE) 
+img1 = cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE)
+img2 = cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE) 
 # Image 1
 gx1 = cv2.Sobel(img1, cv2.CV_64F, 1, 0, ksize=3)
 gy1 = cv2.Sobel(img1, cv2.CV_64F, 0, 1, ksize=3)

@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 SIZE = (512, 512)
-img1 = cv2.resize(cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE), SIZE)
-img2 = cv2.resize(cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE), SIZE) 
+img1 = cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE)
+img2 = cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE)
 
 
 # 4. Second-order derivative using Laplacian

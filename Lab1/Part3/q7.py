@@ -1,28 +1,16 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-# =========================================================
-# 1. READ IMAGES
-# =========================================================
-
-
 img1 = cv2.imread(
     r"S:\Computer Vision\Lab1\Part3\images\img5.png",
     cv2.IMREAD_GRAYSCALE
 )
-
 img2 = cv2.imread(
     r"S:\Computer Vision\Lab1\Part3\images\img6.png",
     cv2.IMREAD_GRAYSCALE
 )
-
-
 if img1 is None or img2 is None:
     raise FileNotFoundError("Could not load one or both images.")
-
-
 # Make both images the same size
 img2 = cv2.resize(
     img2,

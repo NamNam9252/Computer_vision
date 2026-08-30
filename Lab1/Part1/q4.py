@@ -32,11 +32,11 @@ def error_map(original, reconstructed):
 
 
 
-img = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\images\\img1.gif")
+img = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\images\\img1.gif",cv2.IMREAD_GRAYSCALE)
 
-img128 = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\output\\img_128_nearest.png")
+img128 = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\output\\img_128_nearest.png",cv2.IMREAD_GRAYSCALE)
 
-img256 = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\output\\img_256_nearest.png")
+img256 = cv2.imread(f"S:\\Computer Vision\\Lab1\\Part1\\output\\img_256_nearest.png",cv2.IMREAD_GRAYSCALE)
 
 error_map(img, img128)
 error_map(img ,img256)

@@ -5,8 +5,8 @@ from utils import convolution2D as conv2D
 from utils import  sobelManual as sobel
 
 SIZE = (512, 512)
-img1 = cv2.resize(cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE), SIZE)
-img2 = cv2.resize(cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE), SIZE) 
+img1 = cv2.imread("Part2/images/img1.png", cv2.IMREAD_GRAYSCALE)
+img2 = cv2.imread("Part2/images/img2.png", cv2.IMREAD_GRAYSCALE)
 
 gx1, gy1 = sobel.sobelManual(img1)
 gx2, gy2 = sobel.sobelManual(img2)

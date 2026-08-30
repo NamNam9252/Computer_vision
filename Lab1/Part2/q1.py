@@ -11,10 +11,14 @@ kernel_weighted = np.array([[1,2,1],
 
 
 
-imgns1 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img3.png" , cv2.IMREAD_GRAYSCALE)
-imgns2 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img4.png" , cv2.IMREAD_GRAYSCALE)
+imgns1 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img3.png",cv2.IMREAD_GRAYSCALE)
+imgns2 = cv2.imread(r"S:\Computer Vision\Lab1\Part2\images\img4.png",cv2.IMREAD_GRAYSCALE)
 
 
+print(imgns1.shape)
+print(imgns1[0][0])
+print(imgns2.shape)
+print(imgns2[0][0])
 
 # Image 1: Salt & Pepper noisy
 box1 = filters.boxFilter(imgns1, 3)

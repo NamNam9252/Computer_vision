@@ -3,11 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-
-# =========================================================
-# READ IMAGES
-# =========================================================
-
 img1 = cv2.imread(
     r"S:\Computer Vision\Lab1\Part3\images\img5.png",
     cv2.IMREAD_GRAYSCALE
